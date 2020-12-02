@@ -43,7 +43,8 @@ func NewOpenShiftClusterDynamicValidator(log *logrus.Entry, env env.Interface, o
 		log: log,
 		env: env,
 
-		oc: oc,
+		oc:              oc,
+		subscriptionDoc: subscriptionDoc,
 
 		fpAuthorizer: fpAuthorizer,
 
@@ -63,7 +64,8 @@ type openShiftClusterDynamicValidator struct {
 	log *logrus.Entry
 	env env.Interface
 
-	oc *api.OpenShiftCluster
+	oc              *api.OpenShiftCluster
+	subscriptionDoc *api.SubscriptionDocument
 
 	fpAuthorizer refreshable.Authorizer
 
@@ -145,7 +147,7 @@ func (dv *openShiftClusterDynamicValidator) Dynamic(ctx context.Context) error {
 func validateServicePrincipalProfile(ctx context.Context, log *logrus.Entry, env env.Interface, oc *api.OpenShiftCluster) (refreshable.Authorizer, error) {
 	log.Print("validateServicePrincipalProfile")
 
-	token, err := aad.GetToken(ctx, log, oc, env.Environment().ResourceManagerEndpoint)
+	token, err := aad.GetToken(ctx, log, oc, subscriptionDoc, env.Environment().ResourceManagerEndpoint)
 	if err != nil {
 		return nil, err
 	}

@@ -338,9 +338,7 @@ func TestPutOrPatchOpenShiftCluster(t *testing.T) {
 							ClusterProfile: api.ClusterProfile{
 								Version: "4.3.0",
 							},
-							ServicePrincipalProfile: api.ServicePrincipalProfile{
-								TenantID: "11111111-1111-1111-1111-111111111111",
-							},
+							ServicePrincipalProfile: api.ServicePrincipalProfile{},
 						},
 					},
 				})
@@ -822,9 +820,7 @@ func TestPutOrPatchOpenShiftCluster(t *testing.T) {
 								Version:         "4.3.0",
 								ResourceGroupID: fmt.Sprintf("/subscriptions/%s/resourcegroups/aro-vjb21wca", mockSubID),
 							},
-							ServicePrincipalProfile: api.ServicePrincipalProfile{
-								TenantID: "11111111-1111-1111-1111-111111111111",
-							},
+							ServicePrincipalProfile: api.ServicePrincipalProfile{},
 						},
 					},
 				})
@@ -860,9 +856,7 @@ func TestPutOrPatchOpenShiftCluster(t *testing.T) {
 							ClusterProfile: api.ClusterProfile{
 								Version: "4.3.0",
 							},
-							ServicePrincipalProfile: api.ServicePrincipalProfile{
-								TenantID: "11111111-1111-1111-1111-111111111111",
-							},
+							ServicePrincipalProfile: api.ServicePrincipalProfile{},
 						},
 					},
 				})

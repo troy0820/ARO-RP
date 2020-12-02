@@ -42,7 +42,7 @@ const (
 )
 
 type Manager interface {
-	Ensure(context.Context, *api.OpenShiftClusterDocument) error
+	Ensure(context.Context, *api.OpenShiftClusterDocument, string) error
 	Delete(context.Context, *api.OpenShiftClusterDocument) error
 }
 
@@ -104,14 +104,14 @@ func storageClient(env env.Interface, billing database.Billing, sub database.Sub
 	return &client, nil
 }
 
-func (m *manager) Ensure(ctx context.Context, doc *api.OpenShiftClusterDocument) error {
+func (m *manager) Ensure(ctx context.Context, doc *api.OpenShiftClusterDocument, tenantID string) error {
 	billingDoc, err := m.billingDB.Create(ctx, &api.BillingDocument{
 		ID:                        doc.ID,
 		Key:                       doc.Key,
 		ClusterResourceGroupIDKey: doc.ClusterResourceGroupIDKey,
 		InfraID:                   doc.OpenShiftCluster.Properties.InfraID,
 		Billing: &api.Billing{
-			TenantID: doc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
+			TenantID: tenantID,
 			Location: doc.OpenShiftCluster.Location,
 		},
 	})

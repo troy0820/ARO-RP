@@ -15,6 +15,7 @@ import (
 )
 
 func TestEnsureBillingEntry(t *testing.T) {
+	mockTenantID := "11111111-1111-1111-1111-111111111111"
 	ctx := context.Background()
 
 	for _, tt := range []struct {
@@ -26,7 +27,7 @@ func TestEnsureBillingEntry(t *testing.T) {
 			name: "manager create is called and doesn't return an error when create doesn't return an error",
 			mocks: func(billing *mock_billing.MockManager) {
 				billing.EXPECT().
-					Ensure(gomock.Any(), &api.OpenShiftClusterDocument{}).
+					Ensure(gomock.Any(), &api.OpenShiftClusterDocument{}, mockTenantID).
 					Return(nil)
 			},
 		},
@@ -34,7 +35,7 @@ func TestEnsureBillingEntry(t *testing.T) {
 			name: "manager create is called and returns an error on create returning an error",
 			mocks: func(billing *mock_billing.MockManager) {
 				billing.EXPECT().
-					Ensure(gomock.Any(), &api.OpenShiftClusterDocument{}).
+					Ensure(gomock.Any(), &api.OpenShiftClusterDocument{}, mockTenantID).
 					Return(errors.New("random error"))
 			},
 			wantErr: "random error",
@@ -53,6 +54,7 @@ func TestEnsureBillingEntry(t *testing.T) {
 			}
 
 			err := m.ensureBillingRecord(ctx)
+			t.Log("the error", err)
 			if err != nil && err.Error() != tt.wantErr ||
 				err == nil && tt.wantErr != "" {
 				t.Error(err)

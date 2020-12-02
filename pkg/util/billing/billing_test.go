@@ -166,9 +166,7 @@ func TestDelete(t *testing.T) {
 					ID:                        mockSubID,
 					OpenShiftCluster: &api.OpenShiftCluster{
 						Properties: api.OpenShiftClusterProperties{
-							ServicePrincipalProfile: api.ServicePrincipalProfile{
-								TenantID: mockTenantID,
-							},
+							ServicePrincipalProfile: api.ServicePrincipalProfile{},
 						},
 						Location: location,
 					},
@@ -184,9 +182,7 @@ func TestDelete(t *testing.T) {
 					ID:                        mockSubID,
 					OpenShiftCluster: &api.OpenShiftCluster{
 						Properties: api.OpenShiftClusterProperties{
-							ServicePrincipalProfile: api.ServicePrincipalProfile{
-								TenantID: mockTenantID,
-							},
+							ServicePrincipalProfile: api.ServicePrincipalProfile{},
 						},
 						Location: location,
 					},
@@ -278,10 +274,8 @@ func TestEnsure(t *testing.T) {
 					ID:                        mockSubID,
 					OpenShiftCluster: &api.OpenShiftCluster{
 						Properties: api.OpenShiftClusterProperties{
-							ServicePrincipalProfile: api.ServicePrincipalProfile{
-								TenantID: mockTenantID,
-							},
-							InfraID: mockInfraID,
+							ServicePrincipalProfile: api.ServicePrincipalProfile{},
+							InfraID:                 mockInfraID,
 						},
 						Location: location,
 					},
@@ -295,6 +289,7 @@ func TestEnsure(t *testing.T) {
 									State: "NotRegistered",
 								},
 							},
+							TenantID: mockSubID,
 						},
 					},
 				})
@@ -321,10 +316,8 @@ func TestEnsure(t *testing.T) {
 					ID:                        mockSubID,
 					OpenShiftCluster: &api.OpenShiftCluster{
 						Properties: api.OpenShiftClusterProperties{
-							ServicePrincipalProfile: api.ServicePrincipalProfile{
-								TenantID: mockTenantID,
-							},
-							InfraID: mockInfraID,
+							ServicePrincipalProfile: api.ServicePrincipalProfile{},
+							InfraID:                 mockInfraID,
 						},
 						Location: location,
 					},
@@ -338,6 +331,7 @@ func TestEnsure(t *testing.T) {
 									State: "NotRegistered",
 								},
 							},
+							TenantID: mockSubID,
 						},
 					},
 				})
@@ -354,10 +348,8 @@ func TestEnsure(t *testing.T) {
 					ID:                        mockSubID,
 					OpenShiftCluster: &api.OpenShiftCluster{
 						Properties: api.OpenShiftClusterProperties{
-							ServicePrincipalProfile: api.ServicePrincipalProfile{
-								TenantID: mockTenantID,
-							},
-							InfraID: mockInfraID,
+							ServicePrincipalProfile: api.ServicePrincipalProfile{},
+							InfraID:                 mockInfraID,
 						},
 						Location: location,
 					},
@@ -371,6 +363,7 @@ func TestEnsure(t *testing.T) {
 									State: "NotRegistered",
 								},
 							},
+							TenantID: mockSubID,
 						},
 					},
 				})
@@ -427,8 +420,11 @@ func TestEnsure(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			err = m.Ensure(ctx, doc)
+			err = m.Ensure(ctx, doc, mockSubID)
 			if err != nil && err.Error() != tt.wantErr ||
 				err == nil && tt.wantErr != "" {
 				t.Error(err)
