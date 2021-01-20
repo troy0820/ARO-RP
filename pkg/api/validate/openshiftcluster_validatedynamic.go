@@ -71,17 +71,17 @@ func (dv *openShiftClusterDynamicValidator) Dynamic(ctx context.Context) error {
 	}
 
 	// FP validation
-	fpDynamic, err := NewValidator(dv.log, dv.env, mSubnetID, wSubnetIDs, dv.subscriptionDoc.ID, dv.fpAuthorizer, api.CloudErrorCodeInvalidResourceProviderPermissions, "resource provider")
+	fpDynamic, err := NewValidator(dv.log, dv.env.Environment(), mSubnetID, wSubnetIDs, dv.subscriptionDoc.ID, dv.fpAuthorizer)
 	if err != nil {
 		return err
 	}
 
-	err = fpDynamic.ValidateVnetPermissions(ctx)
+	err = fpDynamic.ValidateVnetPermissions(ctx, api.CloudErrorCodeInvalidResourceProviderPermissions, "resource provider")
 	if err != nil {
 		return err
 	}
 
-	err = fpDynamic.ValidateRouteTablesPermissions(ctx)
+	err = fpDynamic.ValidateRouteTablesPermissions(ctx, api.CloudErrorCodeInvalidResourceProviderPermissions, "resource provider")
 	if err != nil {
 		return err
 	}
@@ -92,24 +92,17 @@ func (dv *openShiftClusterDynamicValidator) Dynamic(ctx context.Context) error {
 		return err
 	}
 
-	token, err := aad.GetToken(ctx, dv.log, dv.oc, dv.subscriptionDoc, dv.env.Environment().ActiveDirectoryEndpoint, dv.env.Environment().ResourceManagerEndpoint)
+	spDynamic, err := NewValidator(dv.log, dv.env.Environment(), mSubnetID, wSubnetIDs, dv.subscriptionDoc.ID, spAuthorizer)
 	if err != nil {
 		return err
 	}
 
-	spAuthorizer := refreshable.NewAuthorizer(token)
-
-	spDynamic, err := NewValidator(dv.log, dv.env, mSubnetID, wSubnetIDs, dv.subscriptionDoc.ID, spAuthorizer, api.CloudErrorCodeInvalidServicePrincipalPermissions, "provided service principal")
+	err = spDynamic.ValidateVnetPermissions(ctx, api.CloudErrorCodeInvalidServicePrincipalPermissions, "provided service principal")
 	if err != nil {
 		return err
 	}
 
-	err = spDynamic.ValidateVnetPermissions(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = spDynamic.ValidateRouteTablesPermissions(ctx)
+	err = spDynamic.ValidateRouteTablesPermissions(ctx, api.CloudErrorCodeInvalidServicePrincipalPermissions, "provided service principal")
 	if err != nil {
 		return err
 	}
