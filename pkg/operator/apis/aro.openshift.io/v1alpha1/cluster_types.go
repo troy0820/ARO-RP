@@ -13,10 +13,11 @@ const (
 	InternetReachableFromMaster status.ConditionType = "InternetReachableFromMaster"
 	InternetReachableFromWorker status.ConditionType = "InternetReachableFromWorker"
 	MachineValid                status.ConditionType = "MachineValid"
+	ServicePrincipalValid       status.ConditionType = "ServicePrincipalValid"
 )
 
 func AllConditionTypes() []status.ConditionType {
-	return []status.ConditionType{InternetReachableFromMaster, InternetReachableFromWorker, MachineValid}
+	return []status.ConditionType{InternetReachableFromMaster, InternetReachableFromWorker, MachineValid, ServicePrincipalValid}
 }
 
 type GenevaLoggingSpec struct {

@@ -293,7 +293,7 @@ func validateServicePrincipalProfile(ctx context.Context, log *logrus.Entry, env
 
 	log.Print("validateServicePrincipalProfile")
 
-	token, err := aad.GetToken(ctx, log, oc, sub, env.Environment().ActiveDirectoryEndpoint, env.Environment().GraphEndpoint)
+	token, err := aad.GetToken(ctx, log, oc.Properties.ServicePrincipalProfile, sub.Subscription.Properties.TenantID, env.Environment().ResourceManagerEndpoint)
 	if err != nil {
 		return err
 	}
