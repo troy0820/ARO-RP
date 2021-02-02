@@ -5,10 +5,9 @@ package checker
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/http"
 
+	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/form3tech-oss/jwt-go"
 	maoclient "github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned"
 	"github.com/operator-framework/operator-sdk/pkg/status"
@@ -16,8 +15,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
-	azureproviderv1beta1 "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/api/validate"
@@ -26,7 +23,6 @@ import (
 	"github.com/Azure/ARO-RP/pkg/operator/controllers"
 	"github.com/Azure/ARO-RP/pkg/util/aad"
 	"github.com/Azure/ARO-RP/pkg/util/refreshable"
-	"github.com/Azure/go-autorest/autorest/azure"
 )
 
 type ServicePrincipalChecker struct {
@@ -37,22 +33,7 @@ type ServicePrincipalChecker struct {
 	role          string
 }
 
-type azureCredentials struct {
-	clientID       string
-	clientSecret   string
-	tenantID       string
-	subscriptionID string
-}
-
-type azureClaim struct {
-	Roles []string `json:"roles,omitempty"`
-}
-
-func (*azureClaim) Valid() error {
-	return fmt.Errorf("unimplemented")
-}
-
-func NewServicePrincipalChecker(log *logrus.Entry, arocli aroclient.Interface, maocli maoclient.Interface, kubernetescli kubernetes.Interface, role string) *ServicePrincipalChecker {
+func NewServicePrincipalChecker(log *logrus.Entry, maocli maoclient.Interface, arocli aroclient.Interface, kubernetescli kubernetes.Interface, role string) *ServicePrincipalChecker {
 	return &ServicePrincipalChecker{
 		log:           log,
 		clustercli:    maocli,
@@ -62,105 +43,16 @@ func NewServicePrincipalChecker(log *logrus.Entry, arocli aroclient.Interface, m
 	}
 }
 
-func getAzureCredentialSecret(ctx context.Context, kubernetescli kubernetes.Interface) (azureCredentials, error) {
-	var azCreds azureCredentials
-
-	secret, err := kubernetescli.CoreV1().Secrets(azureCredentialSecretNamespace).Get(ctx, azureCredentialSecretName, metav1.GetOptions{})
-	if err != nil {
-		return azCreds, err
-	}
-
-	clientIDBytes, ok := secret.Data["azure_client_id"]
-	if !ok {
-		return azCreds, errors.New("azure_client_id doesn't exist")
-	}
-	azCreds.clientID = string(clientIDBytes)
-
-	clientSecretBytes, ok := secret.Data["azure_client_secret"]
-	if !ok {
-		return azCreds, errors.New("azure_client_secret doesn't exist")
-	}
-	azCreds.clientSecret = string(clientSecretBytes)
-
-	tenantIDBytes, ok := secret.Data["azure_tenant_id"]
-	if !ok {
-		return azCreds, errors.New("azure_tenant_id doesn't exist")
-	}
-	azCreds.tenantID = string(tenantIDBytes)
-
-	subscriptionBytes, ok := secret.Data["azure_subscription_id"]
-	if !ok {
-		return azCreds, errors.New("azure_subscription_id doesn't exist")
-	}
-	azCreds.subscriptionID = string(subscriptionBytes)
-
-	return azCreds, nil
-}
-
-func getSubnetIDs(ctx context.Context, vnetID string, clustercli maoclient.Interface) (masterSubnetID string, workerSubnetIDs []string, err error) {
-
-	machines, err := clustercli.MachineV1beta1().Machines(machineSetsNamespace).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return masterSubnetID, workerSubnetIDs, err
-	}
-
-	workerSubnetNames := map[string]bool{}
-
-	for _, machine := range machines.Items {
-		if machine.Spec.ProviderSpec.Value == nil {
-			return masterSubnetID, workerSubnetIDs, fmt.Errorf("machine %s: provider spec missing", machine.Name)
-		}
-
-		o, _, err := scheme.Codecs.UniversalDeserializer().Decode(machine.Spec.ProviderSpec.Value.Raw, nil, nil)
-		if err != nil {
-			return masterSubnetID, workerSubnetIDs, err
-		}
-
-		machineProviderSpec, ok := o.(*azureproviderv1beta1.AzureMachineProviderSpec)
-		if !ok {
-			// This should never happen: codecs uses scheme that has only one registered type
-			// and if something is wrong with the provider spec - decoding should fail
-			return masterSubnetID, workerSubnetIDs, fmt.Errorf("machine %s: failed to read provider spec: %T", machine.Name, o)
-		}
-
-		isMaster, err := isMasterRole(&machine)
-		if err != nil {
-			return masterSubnetID, workerSubnetIDs, err
-		}
-
-		if isMaster {
-			// Don't need to reset the name if it's already set
-			if masterSubnetID == "" {
-				masterSubnetID = vnetID + "/subnets/" + machineProviderSpec.Subnet
-			}
-		} else {
-			workerSubnetNames[machineProviderSpec.Subnet] = true
-		}
-	}
-
-	// Add unique worker subnet names
-	for k := range workerSubnetNames {
-		workerSubnetIDs = append(workerSubnetIDs, vnetID+"/subnets/"+k)
-	}
-
-	return masterSubnetID, workerSubnetIDs, err
-}
-
-func validateServicePrincipalProfile(ctx context.Context, log *logrus.Entry, env *azure.Environment, azCred azureCredentials) (refreshable.Authorizer, error) {
+func validateServicePrincipalProfile(ctx context.Context, log *logrus.Entry, env *azure.Environment, azCred *credentials) (refreshable.Authorizer, error) {
 	log.Print("validateServicePrincipalProfile")
 
-	spp := api.ServicePrincipalProfile{
-		ClientID:     azCred.clientID,
-		ClientSecret: api.SecureString(azCred.clientSecret),
-	}
-
-	token, err := aad.GetToken(ctx, log, spp, azCred.tenantID, env.ResourceManagerEndpoint)
+	token, err := aad.GetToken(ctx, log, string(azCred.clientID), api.SecureString(azCred.clientSecret), string(azCred.tenantID), env.ActiveDirectoryEndpoint, env.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, err
 	}
 
 	p := &jwt.Parser{}
-	c := &azureClaim{}
+	c := &validate.AzureClaim{}
 	_, _, err = p.ParseUnverified(token.OAuthToken(), c)
 	if err != nil {
 		return nil, err
@@ -186,12 +78,7 @@ func (r *ServicePrincipalChecker) servicePrincipalValid(ctx context.Context) err
 		return err
 	}
 
-	azCred, err := getAzureCredentialSecret(ctx, r.kubernetescli)
-	if err != nil {
-		return err
-	}
-
-	masterSubnetID, workerSubnetIDs, err := getSubnetIDs(ctx, cluster.Spec.VnetID, r.clustercli)
+	azCred, err := azCredentials(ctx, r.kubernetescli)
 	if err != nil {
 		return err
 	}
@@ -201,7 +88,12 @@ func (r *ServicePrincipalChecker) servicePrincipalValid(ctx context.Context) err
 		return err
 	}
 
-	validator, err := validate.NewValidator(r.log, &azEnv, masterSubnetID, workerSubnetIDs, azCred.subscriptionID, authorizer)
+	masterSubnetID, workerSubnetIDs, err := getSubnetIDs(ctx, cluster.Spec.VnetID, r.clustercli)
+	if err != nil {
+		return err
+	}
+
+	validator, err := validate.NewValidator(r.log, &azEnv, masterSubnetID, workerSubnetIDs, string(azCred.subscriptionID), authorizer)
 	if err != nil {
 		return err
 	}

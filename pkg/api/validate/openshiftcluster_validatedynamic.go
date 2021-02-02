@@ -42,11 +42,11 @@ func NewOpenShiftClusterDynamicValidator(log *logrus.Entry, env env.Interface, o
 	}
 }
 
-type azureClaim struct {
+type AzureClaim struct {
 	Roles []string `json:"roles,omitempty"`
 }
 
-func (*azureClaim) Valid() error {
+func (*AzureClaim) Valid() error {
 	return fmt.Errorf("unimplemented")
 }
 
@@ -91,6 +91,13 @@ func (dv *openShiftClusterDynamicValidator) Dynamic(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	token, err := aad.GetToken(ctx, dv.log, dv.oc.Properties.ServicePrincipalProfile.ClientID, dv.oc.Properties.ServicePrincipalProfile.ClientSecret, dv.subscriptionDoc.Subscription.Properties.TenantID, dv.env.Environment().ActiveDirectoryEndpoint, dv.env.Environment().ResourceManagerEndpoint)
+	if err != nil {
+		return err
+	}
+
+	spAuthorizer := refreshable.NewAuthorizer(token)
 
 	spDynamic, err := NewValidator(dv.log, dv.env.Environment(), mSubnetID, wSubnetIDs, dv.subscriptionDoc.ID, spAuthorizer)
 	if err != nil {
@@ -293,13 +300,13 @@ func validateServicePrincipalProfile(ctx context.Context, log *logrus.Entry, env
 
 	log.Print("validateServicePrincipalProfile")
 
-	token, err := aad.GetToken(ctx, log, oc.Properties.ServicePrincipalProfile, sub.Subscription.Properties.TenantID, env.Environment().ResourceManagerEndpoint)
+	token, err := aad.GetToken(ctx, log, oc.Properties.ServicePrincipalProfile.ClientID, oc.Properties.ServicePrincipalProfile.ClientSecret, sub.Subscription.Properties.TenantID, env.Environment().ActiveDirectoryEndpoint, env.Environment().GraphEndpoint)
 	if err != nil {
 		return err
 	}
 
 	p := &jwt.Parser{}
-	c := &azureClaim{}
+	c := &AzureClaim{}
 	_, _, err = p.ParseUnverified(token.OAuthToken(), c)
 	if err != nil {
 		return err

@@ -20,9 +20,14 @@ import (
 
 // GetToken authenticates in the customer's tenant as the cluster service
 // principal and returns a token.
-func GetToken(ctx context.Context, log *logrus.Entry, spp api.ServicePrincipalProfile, tenantID string, resource string) (*adal.ServicePrincipalToken, error) {
-	conf := auth.NewClientCredentialsConfig(spp.ClientID, string(spp.ClientSecret), tenantID)
-	conf.Resource = resource
+func GetToken(ctx context.Context, log *logrus.Entry, clientID string, clientSecret api.SecureString, tenantID string, aadEndpoint string, resource string) (*adal.ServicePrincipalToken, error) {
+	conf := auth.ClientCredentialsConfig{
+		ClientID:     clientID,
+		ClientSecret: string(clientSecret),
+		TenantID:     tenantID,
+		Resource:     resource,
+		AADEndpoint:  aadEndpoint,
+	}
 
 	sp, err := conf.ServicePrincipalToken()
 	if err != nil {
