@@ -123,7 +123,14 @@
                         "locationName": "[resourceGroup().location]"
                     }
                 ],
-                "databaseAccountOfferType": "Standard"
+                "databaseAccountOfferType": "Standard",
+                "backupPolicy": {
+                    "periodicModeProperties": {
+                        "backupIntervalInMinutes": 240,
+                        "backupRetentionIntervalInHours": 720
+                    },
+                    "type": "Periodic"
+                }
             },
             "name": "[parameters('databaseAccountName')]",
             "type": "Microsoft.DocumentDB/databaseAccounts",
@@ -131,7 +138,7 @@
             "tags": {
                 "defaultExperience": "Core (SQL)"
             },
-            "apiVersion": "2019-08-01"
+            "apiVersion": "2021-01-15"
         },
         {
             "name": "[guid(resourceGroup().id, parameters('rpServicePrincipalId'), 'RP / Reader')]",
