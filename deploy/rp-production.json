@@ -712,10 +712,17 @@
                     }
                 ],
                 "databaseAccountOfferType": "Standard",
-                "ipRangeFilter": "[if(parameters('disableCosmosDBFirewall'), '', concat('104.42.195.92,40.76.54.131,52.176.6.30,52.169.50.45,52.187.184.26', if(equals(parameters('extraCosmosDBIPs'), ''), '', ','), parameters('extraCosmosDBIPs')))]",
+                "ipRules": "[concat(if(parameters('disableCosmosDBFirewall'), createArray(), parameters('disableCosmosDBFirewall')), if(parameters('extraCosmosDBIPs'),parameters('extraCosmosDBIPs'), createArray())]",
                 "isVirtualNetworkFilterEnabled": "[not(parameters('disableCosmosDBFirewall'))]",
                 "virtualNetworkRules": "[if(parameters('disableCosmosDBFirewall'), createArray(), createArray(createObject('id', resourceId('Microsoft.Network/virtualNetworks/subnets', 'rp-vnet', 'rp-subnet'))))]",
-                "disableKeyBasedMetadataWriteAccess": true
+                "disableKeyBasedMetadataWriteAccess": true,
+                "backupPolicy": {
+                    "periodicModeProperties": {
+                        "backupIntervalInMinutes": 240,
+                        "backupRetentionIntervalInHours": 720
+                    },
+                    "type": "Periodic"
+                }
             },
             "name": "[parameters('databaseAccountName')]",
             "type": "Microsoft.DocumentDB/databaseAccounts",
@@ -723,7 +730,7 @@
             "tags": {
                 "defaultExperience": "Core (SQL)"
             },
-            "apiVersion": "2019-08-01",
+            "apiVersion": "2021-01-15",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', 'rp-vnet')]"
             ]
@@ -734,13 +741,13 @@
                     "id": "['ARO']"
                 },
                 "options": {
-                    "throughput": "500"
+                    "throughput": 500
                 }
             },
             "name": "[concat(parameters('databaseAccountName'), '/', 'ARO')]",
             "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2019-08-01",
+            "apiVersion": "2021-01-15",
             "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName'))]"
             ]
@@ -762,7 +769,7 @@
             "name": "[concat(parameters('databaseAccountName'), '/', 'ARO', '/AsyncOperations')]",
             "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2019-08-01",
+            "apiVersion": "2021-01-15",
             "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), 'ARO')]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName'))]"
@@ -784,7 +791,7 @@
             "name": "[concat(parameters('databaseAccountName'), '/', 'ARO', '/Billing')]",
             "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2019-08-01",
+            "apiVersion": "2021-01-15",
             "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), 'ARO')]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName'))]"
@@ -807,7 +814,7 @@
             "name": "[concat(parameters('databaseAccountName'), '/', 'ARO', '/Monitors')]",
             "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2019-08-01",
+            "apiVersion": "2021-01-15",
             "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), 'ARO')]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName'))]"
@@ -848,7 +855,7 @@
             "name": "[concat(parameters('databaseAccountName'), '/', 'ARO', '/OpenShiftClusters')]",
             "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2019-08-01",
+            "apiVersion": "2021-01-15",
             "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), 'ARO')]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName'))]"
@@ -867,13 +874,13 @@
                     "defaultTtl": -1
                 },
                 "options": {
-                    "throughput": "400"
+                    "throughput": 400
                 }
             },
             "name": "[concat(parameters('databaseAccountName'), '/', 'ARO', '/Portal')]",
             "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2019-08-01",
+            "apiVersion": "2021-01-15",
             "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), 'ARO')]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName'))]"
@@ -895,7 +902,7 @@
             "name": "[concat(parameters('databaseAccountName'), '/', 'ARO', '/Subscriptions')]",
             "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2019-08-01",
+            "apiVersion": "2021-01-15",
             "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), 'ARO')]",
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountName'))]"
