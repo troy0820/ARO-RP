@@ -712,23 +712,7 @@
                     }
                 ],
                 "databaseAccountOfferType": "Standard",
-                "ipRules": [
-                    {
-                        "ipAddressOrRange": "104.42.195.92"
-                    },
-                    {
-                        "ipAddressOrRange": "40.76.54.131"
-                    },
-                    {
-                        "ipAddressOrRange": "52.176.6.30"
-                    },
-                    {
-                        "ipAddressOrRange": "52.169.50.45"
-                    },
-                    {
-                        "ipAddressOrRange": "52.187.184.26"
-                    }
-                ],
+                "ipRules": [],
                 "isVirtualNetworkFilterEnabled": "[not(parameters('disableCosmosDBFirewall'))]",
                 "virtualNetworkRules": "[if(parameters('disableCosmosDBFirewall'), createArray(), createArray(createObject('id', resourceId('Microsoft.Network/virtualNetworks/subnets', 'rp-vnet', 'rp-subnet'))))]",
                 "disableKeyBasedMetadataWriteAccess": true,
