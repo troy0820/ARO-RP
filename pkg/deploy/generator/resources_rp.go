@@ -1319,7 +1319,7 @@ func (g *generator) rpCosmosDB() []*arm.Resource {
 		APIVersion: azureclient.APIVersion("Microsoft.DocumentDB"),
 	}
 	if g.production {
-		cosmosdb.IPRules = &[]mgmtdocumentdb.IPAddressOrRange{}
+		cosmosdb.IPRules = g.disableCosmosDBIPFirewall()
 		cosmosdb.IsVirtualNetworkFilterEnabled = to.BoolPtr(true)
 		cosmosdb.VirtualNetworkRules = &[]mgmtdocumentdb.VirtualNetworkRule{}
 		cosmosdb.DisableKeyBasedMetadataWriteAccess = to.BoolPtr(true)
@@ -1671,4 +1671,14 @@ func (g *generator) rpVersionStorageAccount() []*arm.Resource {
 
 func (g *generator) rpStorageAccount() *arm.Resource {
 	return g.storageAccount("[substring(parameters('storageAccountDomain'), 0, indexOf(parameters('storageAccountDomain'), '.'))]", nil)
+}
+
+func (g *generator) disableCosmosDBIPFirewall() *[]mgmtdocumentdb.IPAddressOrRange {
+	return &[]mgmtdocumentdb.IPAddressOrRange{
+		{IPAddressOrRange: to.StringPtr("104.42.195.92")},
+		{IPAddressOrRange: to.StringPtr("40.76.54.131")},
+		{IPAddressOrRange: to.StringPtr("52.176.6.30")},
+		{IPAddressOrRange: to.StringPtr("52.169.50.45")},
+		{IPAddressOrRange: to.StringPtr("52.187.184.26")},
+	}
 }
