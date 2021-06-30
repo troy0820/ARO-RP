@@ -53,7 +53,6 @@ func (g *generator) templateFixup(t *arm.Template) ([]byte, error) {
 		b = bytes.Replace(b, []byte(`"sourceAddressPrefixes": []`), []byte(`"sourceAddressPrefixes": "[parameters('rpNsgSourceAddressPrefixes')]"`), 1)
 		b = bytes.Replace(b, []byte(`"isVirtualNetworkFilterEnabled": true`), []byte(`"isVirtualNetworkFilterEnabled": "[not(parameters('disableCosmosDBFirewall'))]"`), 1)
 		b = bytes.Replace(b, []byte(`"virtualNetworkRules": []`), []byte(`"virtualNetworkRules": "[if(parameters('disableCosmosDBFirewall'), createArray(), createArray(createObject('id', resourceId('Microsoft.Network/virtualNetworks/subnets', 'rp-vnet', 'rp-subnet'))))]"`), 1)
-		b = bytes.Replace(b, []byte(`"ipRules": []`), []byte(`"ipRules": "[concat(if(parameters('disableCosmosDBFirewall'), createArray(), parameters('disableCosmosDBFirewall')), if(parameters('extraCosmosDBIPs'),parameters('extraCosmosDBIPs'), createArray())]"`), 1)
 	}
 
 	return append(b, byte('\n')), nil
